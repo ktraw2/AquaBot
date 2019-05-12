@@ -19,7 +19,7 @@
 
 /* other definitions */
 #define DELAY 750
-#define MAX_SPEED 255
+#define MAX_SPEED 200
 #define TARGET 0
 #define SERIAL_BAUDRATE 115200
 #define DEBUG
@@ -156,9 +156,15 @@ void loop() {
 }
 
 void driveTwo(DC_Motor & one, DC_Motor & two, byte intensity, bool forward, int time) {
+#ifdef DEBUG_FINER
+  Serial.println("Turning two motors on...");
+#endif
   one.on(intensity, forward);
   two.on(intensity, forward);
   delay(time);
+#ifdef DEBUG_FINER
+  Serial.println("Turning two motors off...");
+#endif
   one.off();
   two.off();
 }
