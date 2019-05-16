@@ -1,10 +1,10 @@
 /* pin definitions */
-#define CLAW_MOTOR_PIN 3
-#define ARM_MOTOR_PIN 5
-#define LEFT_MOTOR_FORWARD_PIN 6
-#define LEFT_MOTOR_BACKWARD_PIN 9
-#define RIGHT_MOTOR_FORWARD_PIN 10
-#define RIGHT_MOTOR_BACKWARD_PIN 11
+#define CLAW_MOTOR_PIN 10
+#define ARM_MOTOR_PIN 11
+#define LEFT_MOTOR_FORWARD_PIN 3
+#define LEFT_MOTOR_BACKWARD_PIN 6
+#define RIGHT_MOTOR_FORWARD_PIN 5
+#define RIGHT_MOTOR_BACKWARD_PIN 9
 
 /* angle definitions */
 #define CLAW_OPEN_ANGLE 90
@@ -18,11 +18,12 @@
 #define AGE_THRESHOLD 10
 
 /* other definitions */
-#define DELAY 750
-#define MAX_SPEED 200
+#define DELAY 450
+#define MAX_SPEED 255
 #define TARGET 0
 #define SERIAL_BAUDRATE 115200
 #define DEBUG
+#define DEBUG_FINER
 
 #include <Pixy2.h>
 #include <Servo.h>
@@ -41,9 +42,17 @@ public:
 
   void on(byte intensity, bool forward) {
     if (forward) {
+#ifdef DEBUG_FINER
+      Serial.print("Forward on: ");
+      Serial.println(forward_pin);
+#endif
       analogWrite(forward_pin, intensity);
     }
     else {
+#ifdef DEBUG_FINER
+      Serial.print("Backward on: ");
+      Serial.println(backward_pin);
+#endif
       analogWrite(backward_pin, intensity);
     }
   }
@@ -159,8 +168,9 @@ void driveTwo(DC_Motor & one, DC_Motor & two, byte intensity, bool forward, int 
 #ifdef DEBUG_FINER
   Serial.println("Turning two motors on...");
 #endif
-  one.on(intensity, forward);
   two.on(intensity, forward);
+  one.on(intensity, forward);
+  
   delay(time);
 #ifdef DEBUG_FINER
   Serial.println("Turning two motors off...");
