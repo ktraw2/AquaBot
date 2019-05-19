@@ -1,10 +1,17 @@
-/* pin definitions */
-#define CLAW_MOTOR_PIN 10
-#define ARM_MOTOR_PIN 11
-#define LEFT_MOTOR_FORWARD_PIN 3// 3
-#define LEFT_MOTOR_BACKWARD_PIN 6 // 6
-#define RIGHT_MOTOR_FORWARD_PIN 5 // 5
+/* pin definitions for DC motors */
+#define LEFT_MOTOR_FORWARD_PIN 6// 3
+#define LEFT_MOTOR_BACKWARD_PIN 3 // 6
+#define RIGHT_MOTOR_FORWARD_PIN 5 // 5 good
 #define RIGHT_MOTOR_BACKWARD_PIN 9 // 11
+
+/* servo constants */
+#define SERVO_MIN 75
+#define SERVO_MAX 650
+#define SERVO_MIN_DEGREES 0
+#define SERVO_MAX_DEGREES 270
+#define SERVO_FREQUENCY 60
+#define CLAW_SERVO_NUM 3
+#define ARM_SERVO_NUM 7
 
 /* angle definitions */
 #define CLAW_OPEN_ANGLE 90
@@ -25,10 +32,10 @@
 #define TARGET 0
 #define SERIAL_BAUDRATE 115200
 #define DEBUG
-#define DEBUG_FINER
 
 #include <Pixy2.h>
-#include <Servo.h>
+#include <Wire.h>
+#include <Adafruit_PWMServoDriver.h>
 
 /* define a DC motor */
 class DC_Motor {
@@ -72,8 +79,7 @@ public:
 };
 
 Pixy2 pixy;
-Servo armServo;
-Servo clawServo;
+Adafruit_PWMServoDriver servoController = Adafruit_PWMServoDriver();
 
 int * targetStat = 0;
 int targetStatThreshold = 0;
@@ -92,8 +98,8 @@ void setup() {
 #endif
   
   pixy.init();
-  armServo.attach(ARM_MOTOR_PIN);
-  clawServo.attach(CLAW_MOTOR_PIN);
+  servoController.begin();
+  servoController.setPWMFreq(SERVO_FREQUENCY);
 }
 
 void loop() {
@@ -172,7 +178,7 @@ void loop() {
         goneReverse = true;
       }
       else {
-        grabAndPlace(clawServo, armServo);
+        grabAndPlace(servoController);
       }
       return;
     }
@@ -194,29 +200,33 @@ void driveTwo(DC_Motor & one, DC_Motor & two, byte intensity, bool forward, int 
   two.off();
 }
 
-void grabAndPlace(Servo & claw, Servo & arm) {
-  closeClaw(claw);
+void grabAndPlace(Adafruit_PWMServoDriver & controller) {
+  closeClaw(controller);
   delay(DELAY);
-  armUp(arm);
+  armUp(controller);
   delay(DELAY);
-  openClaw(claw);
+  openClaw(controller);
   delay(DELAY);
-  armDown(arm);
+  armDown(controller);
   delay(DELAY);
 }
 
-void openClaw(Servo & servo) {
-  servo.write(CLAW_OPEN_ANGLE);
+void openClaw(Adafruit_PWMServoDriver & controller) {
+  uint16_t pulselen = map(CLAW_OPEN_ANGLE, SERVO_MIN_DEGREES, SERVO_MAX_DEGREES, SERVO_MIN, SERVO_MAX);
+  controller.setPWM(CLAW_SERVO_NUM, 0, pulselen);
 }
 
-void closeClaw(Servo & servo) {
-  servo.write(CLAW_CLOSE_ANGLE);
+void closeClaw(Adafruit_PWMServoDriver & controller) {
+  uint16_t pulselen = map(CLAW_CLOSE_ANGLE, SERVO_MIN_DEGREES, SERVO_MAX_DEGREES, SERVO_MIN, SERVO_MAX);
+  controller.setPWM(CLAW_SERVO_NUM, 0, pulselen);
 }
 
-void armUp(Servo & servo) {
-  servo.write(ARM_UP_ANGLE);
+void armUp(Adafruit_PWMServoDriver & controller) {
+  uint16_t pulselen = map(ARM_UP_ANGLE, SERVO_MIN_DEGREES, SERVO_MAX_DEGREES, SERVO_MIN, SERVO_MAX);
+  controller.setPWM(ARM_SERVO_NUM, 0, pulselen);
 }
 
-void armDown(Servo & servo) {
-  servo.write(ARM_DOWN_ANGLE);
+void armDown(Adafruit_PWMServoDriver & controller) {
+  uint16_t pulselen = map(ARM_DOWN_ANGLE, SERVO_MIN_DEGREES, SERVO_MAX_DEGREES, SERVO_MIN, SERVO_MAX);
+  controller.setPWM(ARM_SERVO_NUM, 0, pulselen);
 }
