@@ -1,10 +1,10 @@
 /* pin definitions */
 #define CLAW_MOTOR_PIN 10
 #define ARM_MOTOR_PIN 11
-#define LEFT_MOTOR_FORWARD_PIN 3
-#define LEFT_MOTOR_BACKWARD_PIN 6
-#define RIGHT_MOTOR_FORWARD_PIN 5
-#define RIGHT_MOTOR_BACKWARD_PIN 9
+#define LEFT_MOTOR_FORWARD_PIN 3// 3
+#define LEFT_MOTOR_BACKWARD_PIN 6 // 6
+#define RIGHT_MOTOR_FORWARD_PIN 5 // 5
+#define RIGHT_MOTOR_BACKWARD_PIN 9 // 11
 
 /* angle definitions */
 #define CLAW_OPEN_ANGLE 90
@@ -13,13 +13,15 @@
 #define ARM_DOWN_ANGLE 0
 
 /* threshold definitions */
-#define WIDTH_THRESHOLD 220
-#define HEIGHT_THRESHOLD 200
-#define AGE_THRESHOLD 10
+#define WIDTH_THRESHOLD 175 /* old: 220 */
+#define HEIGHT_THRESHOLD 150 /* old: 200 */
+#define AGE_MIN_THRESHOLD 50
+#define AGE_MAX_THRESHOLD 60
 
 /* other definitions */
 #define DELAY 450
-#define MAX_SPEED 255
+#define MAX_SPEED 200
+#define REVERSE_SPEED 255
 #define TARGET 0
 #define SERIAL_BAUDRATE 115200
 #define DEBUG
@@ -79,6 +81,8 @@ int targetStatThreshold = 0;
 DC_Motor left (LEFT_MOTOR_FORWARD_PIN, LEFT_MOTOR_BACKWARD_PIN);
 DC_Motor right (RIGHT_MOTOR_FORWARD_PIN, RIGHT_MOTOR_BACKWARD_PIN);
 
+bool goneReverse = false;
+
 
 void setup() {
   // put your setup code here, to run once:
@@ -124,7 +128,8 @@ void loop() {
     Serial.println(width);
 #endif
     
-    if (age < AGE_THRESHOLD) {
+    if (age > AGE_MIN_THRESHOLD && age < AGE_MAX_THRESHOLD) {
+      goneReverse = false;
       if (width >= height) {
 #ifdef DEBUG
       Serial.println("Want to increase: height");
@@ -142,6 +147,9 @@ void loop() {
         targetStatThreshold = WIDTH_THRESHOLD;
       }
     }
+    else if (age < AGE_MIN_THRESHOLD) {
+      targetStat = NULL;
+    }
 
      
     
@@ -157,8 +165,15 @@ void loop() {
        driveTwo(left, right, speed, true, DELAY);
        return;
     }
-    else {
-      grabAndPlace(clawServo, armServo);
+    else if (targetStat && (*targetStat >= targetStatThreshold)){
+      if (goneReverse == false) {
+        delay(DELAY);
+        driveTwo(left, right, REVERSE_SPEED, false, DELAY);
+        goneReverse = true;
+      }
+      else {
+        grabAndPlace(clawServo, armServo);
+      }
       return;
     }
   }
